@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>💰 Expense Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── RESET & BASE ───────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --card:      #21253a;
+      --border:    #2e3352;
+      --accent:    #6c63ff;
+      --accent2:   #a78bfa;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --yellow:    #f59e0b;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --radius:    14px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #1a1d27 0%, #12152a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.4);
+    }
+
+    .logo h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-date {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────────── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* ── STATS CARDS ─────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .stat-card.purple::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+    .stat-card.green::before  { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .stat-card.yellow::before { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
+
+    .stat-label {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stat-card.purple .stat-value { color: var(--accent2); }
+    .stat-card.green  .stat-value { color: #4ade80; }
+    .stat-card.yellow .stat-value { color: #fcd34d; }
+
+    .stat-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── MAIN GRID ───────────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+    }
+
+    /* ── PANEL ───────────────────────────────────────────── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title .icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .panel-title .icon.purple { background: rgba(108,99,255,0.15); }
+    .panel-title .icon.green  { background: rgba(34,197,94,0.15); }
+
+    /* ── EXPENSE TABLE ───────────────────────────────────── */
+    .expense-table-wrap {
+      max-height: 460px;
+      overflow-y: auto;
+    }
+
+    .expense-table-wrap::-webkit-scrollbar { width: 5px; }
+    .expense-table-wrap::-webkit-scrollbar-track { background: transparent; }
+    .expense-table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      padding: 12px 18px;
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(108,99,255,0.05); }
+
+    td {
+      padding: 14px 18px;
+      font-size: 0.875rem;
+      vertical-align: middle;
+    }
+
+    .id-badge {
+      background: rgba(108,99,255,0.15);
+      color: var(--accent2);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .category-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .amount-cell {
+      font-weight: 700;
+      color: #4ade80;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      transition: background 0.15s, transform 0.1s;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .action-btn:hover { transform: scale(1.15); }
+    .action-btn.edit:hover  { background: rgba(108,99,255,0.15); }
+    .action-btn.delete:hover { background: rgba(239,68,68,0.15); }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state .emoji { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* ── FORM PANEL ──────────────────────────────────────── */
+    .form-wrap { padding: 20px; }
+
+    .form-group { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    input, select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.2);
+    }
+
+    select option { background: var(--surface); }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+      margin-top: 4px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(108,99,255,0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(108,99,255,0.5);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    /* ── MONTHLY SUMMARY ─────────────────────────────────── */
+    .summary-section { margin-top: 24px; }
+
+    .month-controls {
+      display: flex;
+      gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .month-controls input, .month-controls select {
+      flex: 1;
+    }
+
+    .month-controls .btn {
+      width: auto;
+      padding: 10px 18px;
+      margin: 0;
+    }
+
+    .summary-body { padding: 0 20px 20px; }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+
+    .summary-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .summary-total {
+      padding: 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border-top: 2px solid var(--border);
+      margin-top: 8px;
+    }
+
+    /* ── TOAST ───────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      z-index: 9999;
+      max-width: 360px;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #toast.success { background: #166534; border: 1px solid #22c55e; color: #4ade80; }
+    #toast.error   { background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; }
+
+    /* ── MODAL ───────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      width: 100%;
+      max-width: 420px;
+      transform: scale(0.95);
+      transition: transform 0.25s;
+    }
+
+    .modal-overlay.open .modal { transform: scale(1); }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal .form-group { margin-bottom: 12px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .modal-actions .btn { margin: 0; flex: 1; }
+
+    /* ── CATEGORY COLORS ─────────────────────────────────── */
+    .cat-Food         { background: rgba(251,146,60,0.15); color: #fb923c; }
+    .cat-Transport    { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .cat-Health       { background: rgba(34,197,94,0.15);  color: #4ade80; }
+    .cat-Shopping     { background: rgba(236,72,153,0.15); color: #f472b6; }
+    .cat-Entertainment{ background: rgba(168,85,247,0.15); color: #c084fc; }
+    .cat-Utilities    { background: rgba(234,179,8,0.15);  color: #facc15; }
+    .cat-Rent         { background: rgba(239,68,68,0.15);  color: #f87171; }
+    .cat-Education    { background: rgba(20,184,166,0.15); color: #2dd4bf; }
+    .cat-Other        { background: rgba(100,116,139,0.15);color: #94a3b8; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .main-grid  { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 16px 18px; }
+      .container { padding: 20px 14px; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <h1>Expense Tracker</h1>
+  </div>
+  <span class="header-date" id="currentDate"></span>
+</header>
+
+<!-- ── TOAST ───────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ── EDIT MODAL ──────────────────────────────── -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>✏️ Edit Expense</h2>
+    <input type="hidden" id="editId"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="editDate"/>
+      </div>
+      <div class="form-group">
+        <label>Amount ($)</label>
+        <input type="number" id="editAmount" min="0.01" step="0.01" placeholder="0.00"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="editCategory">
+        <option>Food</option><option>Transport</option><option>Health</option>
+        <option>Shopping</option><option>Entertainment</option><option>Utilities</option>
+        <option>Rent</option><option>Education</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <input type="text" id="editDescription" placeholder="Brief description"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT ─────────────────────────────── -->
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card purple">
+      <div class="stat-label">Total Expenses</div>
+      <div class="stat-value" id="statTotal">$0.00</div>
+      <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">This Month</div>
+      <div class="stat-value" id="statMonth">$0.00</div>
+      <div class="stat-sub" id="statMonthLabel">—</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">Records</div>
+      <div class="stat-value" id="statCount">0</div>
+      <div class="stat-sub">entries</div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+
+    <!-- LEFT: Table + Summary -->
+    <div>
+      <!-- Expenses Table -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="icon purple">📋</div>
+            All Expenses
+          </div>
+        </div>
+        <div class="expense-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="expenseTable">
+            </tbody>
+          </table>
+          <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="emoji">📭</div>
+            <p>No expenses yet. Add your first one!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Summary -->
+      <div class="panel summary-section">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="icon green">📊</div>
+            Monthly Summary
+          </div>
+        </div>
+        <div class="month-controls">
+          <select id="summaryYear"></select>
+          <select id="summaryMonth">
+            <option value="01">January</option><option value="02">February</option>
+            <option value="03">March</option><option value="04">April</option>
+            <option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option>
+            <option value="09">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+          <button class="btn btn-primary" onclick="renderSummary()" style="white-space:nowrap">View →</button>
+        </div>
+        <div class="summary-body" id="summaryBody">
+          <p style="color:var(--muted); font-size:0.85rem; padding-top:16px; text-align:center;">
+            Select a month and click View →
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Add Expense Form -->
+    <div class="panel" style="align-self: start;">
+      <div class="panel-header">
+        <div class="panel-title">
+          <div class="icon purple">➕</div>
+          <span id="formTitle">Add Expense</span>
+        </div>
+      </div>
+      <div class="form-wrap">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="addDate"/>
+          </div>
+          <div class="form-group">
+            <label>Amount ($)</label>
+            <input type="number" id="addAmount" min="0.01" step="0.01" placeholder="0.00"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="addCategory">
+            <option>Food</option><option>Transport</option><option>Health</option>
+            <option>Shopping</option><option>Entertainment</option><option>Utilities</option>
+            <option>Rent</option><option>Education</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" id="addDescription" placeholder="e.g. Lunch at cafe" maxlength="60"/>
+        </div>
+        <button class="btn btn-primary" onclick="addExpense()">➕ Add Expense</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────────
+  //  DATA LAYER — LocalStorage (mirrors the JSON file approach)
+  // ─────────────────────────────────────────────────────────
+
+  const STORAGE_KEY = 'expense_tracker_data';
+
+  function loadExpenses() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch { return []; }
+  }
+
+  function saveExpenses(expenses) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+  }
+
+  function getNextId(expenses) {
+    if (!expenses.length) return 1;
+    return Math.max(...expenses.map(e => e.id)) + 1;
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  UI UTILITIES
+  // ─────────────────────────────────────────────────────────
+
+  const CATEGORY_COLORS = {
+    Food:'#fb923c', Transport:'#60a5fa', Health:'#4ade80',
+    Shopping:'#f472b6', Entertainment:'#c084fc', Utilities:'#facc15',
+    Rent:'#f87171', Education:'#2dd4bf', Other:'#94a3b8'
+  };
+
+  const SUMMARY_PALETTES = [
+    '#6c63ff','#22c55e','#f59e0b','#ef4444','#ec4899',
+    '#06b6d4','#a78bfa','#84cc16','#ff7c6b'
+  ];
+
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = (type === 'success' ? '✅ ' : '❌ ') + message;
+    toast.className = `show ${type}`;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.className = '', 3000);
+  }
+
+  function formatMoney(n) {
+    return '$' + parseFloat(n).toFixed(2);
+  }
+
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  RENDER
+  // ─────────────────────────────────────────────────────────
+
+  function renderTable() {
+    const expenses = loadExpenses();
+    const tbody = document.getElementById('expenseTable');
+    const empty = document.getElementById('emptyState');
+
+    if (!expenses.length) {
+      tbody.innerHTML = '';
+      empty.style.display = '';
+    } else {
+      empty.style.display = 'none';
+      tbody.innerHTML = expenses.map(e => `
+        <tr>
+          <td><span class="id-badge">#${e.id}</span></td>
+          <td style="color:var(--muted)">${e.date}</td>
+          <td>
+            <span class="category-badge cat-${e.category.replace(/ /g,'')}">${e.category}</span>
+          </td>
+          <td>${e.description}</td>
+          <td class="amount-cell">${formatMoney(e.amount)}</td>
+          <td style="white-space:nowrap">
+            <button class="action-btn edit" title="Edit" onclick="openEditModal(${e.id})">✏️</button>
+            <button class="action-btn delete" title="Delete" onclick="deleteExpense(${e.id})">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    renderStats(expenses);
+  }
+
+  function renderStats(expenses) {
+    const total = expenses.reduce((s, e) => s + parseFloat(e.amount), 0);
+
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const monthTotal = expenses
+      .filter(e => e.date.startsWith(ym))
+      .reduce((s, e) => s + parseFloat(e.amount), 0);
+
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('statTotal').textContent  = formatMoney(total);
+    document.getElementById('statMonth').textContent  = formatMoney(monthTotal);
+    document.getElementById('statMonthLabel').textContent = months[now.getMonth()] + ' ' + now.getFullYear();
+    document.getElementById('statCount').textContent  = expenses.length;
+  }
+
+  function renderSummary() {
+    const year  = document.getElementById('summaryYear').value;
+    const month = document.getElementById('summaryMonth').value;
+    const prefix = `${year}-${month}`;
+
+    const expenses = loadExpenses().filter(e => e.date.startsWith(prefix));
+    const body = document.getElementById('summaryBody');
+
+    if (!expenses.length) {
+      body.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;padding-top:16px;text-align:center">No expenses for ${prefix}.</p>`;
+      return;
+    }
+
+    // Group by category
+    const cats = {};
+    expenses.forEach(e => {
+      cats[e.category] = (cats[e.category] || 0) + parseFloat(e.amount);
+    });
+
+    const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]);
+    const grand  = sorted.reduce((s,[,v]) => s+v, 0);
+
+    const rows = sorted.map(([cat, total], i) => `
+      <div class="summary-row">
+        <span>
+          <span class="summary-dot" style="background:${SUMMARY_PALETTES[i % SUMMARY_PALETTES.length]}"></span>
+          ${cat}
+        </span>
+        <span style="font-weight:600">${formatMoney(total)}</span>
+      </div>
+    `).join('');
+
+    body.innerHTML = `
+      ${rows}
+      <div class="summary-total">
+        <span>Grand Total</span>
+        <span style="color:var(--accent2)">${formatMoney(grand)}</span>
+      </div>
+    `;
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  ADD
+  // ─────────────────────────────────────────────────────────
+
+  function addExpense() {
+    const date        = document.getElementById('addDate').value;
+    const amount      = parseFloat(document.getElementById('addAmount').value);
+    const category    = document.getElementById('addCategory').value;
+    const description = document.getElementById('addDescription').value.trim();
+
+    if (!date)                        return showToast('Please select a date.', 'error');
+    if (!description)                 return showToast('Description cannot be empty.', 'error');
+    if (isNaN(amount) || amount <= 0) return showToast('Please enter a valid amount > 0.', 'error');
+
+    const expenses = loadExpenses();
+    expenses.push({ id: getNextId(expenses), date, category, description, amount });
+    saveExpenses(expenses);
+    renderTable();
+    showToast(`Expense added! (${category} — ${formatMoney(amount)})`);
+
+    // Reset form
+    document.getElementById('addDate').value        = todayISO();
+    document.getElementById('addAmount').value      = '';
+    document.getElementById('addDescription').value = '';
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  EDIT
+  // ─────────────────────────────────────────────────────────
+
+  function openEditModal(id) {
+    const expense = loadExpenses().find(e => e.id === id);
+    if (!expense) return;
+
+    document.getElementById('editId').value          = id;
+    document.getElementById('editDate').value        = expense.date;
+    document.getElementById('editAmount').value      = expense.amount;
+    document.getElementById('editCategory').value    = expense.category;
+    document.getElementById('editDescription').value = expense.description;
+
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('open');
+  }
+
+  function saveEdit() {
+    const id          = parseInt(document.getElementById('editId').value);
+    const date        = document.getElementById('editDate').value;
+    const amount      = parseFloat(document.getElementById('editAmount').value);
+    const category    = document.getElementById('editCategory').value;
+    const description = document.getElementById('editDescription').value.trim();
+
+    if (!date)                        return showToast('Please select a date.', 'error');
+    if (!description)                 return showToast('Description cannot be empty.', 'error');
+    if (isNaN(amount) || amount <= 0) return showToast('Please enter a valid amount > 0.', 'error');
+
+    const expenses = loadExpenses();
+    const idx = expenses.findIndex(e => e.id === id);
+    if (idx === -1) return;
+
+    expenses[idx] = { id, date, category, description, amount };
+    saveExpenses(expenses);
+    renderTable();
+    closeEditModal();
+    showToast('Expense updated successfully!');
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  DELETE
+  // ─────────────────────────────────────────────────────────
+
+  function deleteExpense(id) {
+    const expense = loadExpenses().find(e => e.id === id);
+    if (!expense) return;
+
+    if (!confirm(`Delete this expense?\n\n${expense.description} — ${formatMoney(expense.amount)}`)) return;
+
+    const expenses = loadExpenses().filter(e => e.id !== id);
+    saveExpenses(expenses);
+    renderTable();
+    showToast('Expense deleted.', 'success');
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  INIT
+  // ─────────────────────────────────────────────────────────
+
+  function init() {
+    // Set current date
+    const now = new Date();
+    document.getElementById('currentDate').textContent =
+      now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    // Set today's date as default for add form
+    document.getElementById('addDate').value = todayISO();
+
+    // Populate year selector (current year ± 3)
+    const yearSel = document.getElementById('summaryYear');
+    for (let y = now.getFullYear() + 1; y >= now.getFullYear() - 3; y--) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === now.getFullYear()) opt.selected = true;
+      yearSel.appendChild(opt);
+    }
+
+    // Set current month
+    document.getElementById('summaryMonth').value = String(now.getMonth() + 1).padStart(2,'0');
+
+    // Close modal on overlay click
+    document.getElementById('editModal').addEventListener('click', function(e) {
+      if (e.target === this) closeEditModal();
+    });
+
+    renderTable();
+  }
+
+  init();
+</script>
+</body>
+</html>
